@@ -879,6 +879,7 @@ export const auth = betterAuth({
     }),
   },
   advanced: {
+    cookiePrefix: "crm",
     ipAddress: {
       // Set only by the Node transport middleware, never accepted from clients.
       ipAddressHeaders: ["x-kaneo-client-ip"],

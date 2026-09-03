@@ -27,41 +27,41 @@ export const userTable = pgTable("user", {
     .primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
-  emailVerified: boolean("email_verified")
+  emailVerified: boolean("emailVerified")
     .$defaultFn(() => false)
     .notNull(),
   image: text("image"),
   locale: text("locale"),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { mode: "date" })
+  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt", { mode: "date" })
     .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
-  isAnonymous: boolean("is_anonymous").default(false),
+  isAnonymous: boolean("isAnonymous").default(false),
   role: text("role"),
   banned: boolean("banned").default(false),
-  banReason: text("ban_reason"),
-  banExpires: timestamp("ban_expires", { mode: "date" }),
+  banReason: text("banReason"),
+  banExpires: timestamp("banExpires", { mode: "date" }),
 });
 
 export const sessionTable = pgTable(
   "session",
   {
     id: text("id").primaryKey(),
-    expiresAt: timestamp("expires_at", { mode: "date" }).notNull(),
+    expiresAt: timestamp("expiresAt", { mode: "date" }).notNull(),
     token: text("token").notNull().unique(),
-    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "date" })
+    createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt", { mode: "date" })
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
-    ipAddress: text("ip_address"),
-    userAgent: text("user_agent"),
-    userId: text("user_id")
+    ipAddress: text("ipAddress"),
+    userAgent: text("userAgent"),
+    userId: text("userId")
       .notNull()
       .references(() => userTable.id, { onDelete: "cascade" }),
-    activeOrganizationId: text("active_organization_id"),
-    activeTeamId: text("active_team_id"),
-    impersonatedBy: text("impersonated_by"),
+    activeOrganizationId: text("activeOrganizationId"),
+    activeTeamId: text("activeTeamId"),
+    impersonatedBy: text("impersonatedBy"),
   },
   (table) => [index("session_userId_idx").on(table.userId)],
 );
@@ -72,24 +72,24 @@ export const accountTable = pgTable(
     id: text("id")
       .$defaultFn(() => createId())
       .primaryKey(),
-    accountId: text("account_id").notNull(),
-    providerId: text("provider_id").notNull(),
-    userId: text("user_id")
+    accountId: text("accountId").notNull(),
+    providerId: text("providerId").notNull(),
+    userId: text("userId")
       .notNull()
       .references(() => userTable.id, { onDelete: "cascade" }),
-    accessToken: text("access_token"),
-    refreshToken: text("refresh_token"),
-    idToken: text("id_token"),
-    accessTokenExpiresAt: timestamp("access_token_expires_at", {
+    accessToken: text("accessToken"),
+    refreshToken: text("refreshToken"),
+    idToken: text("idToken"),
+    accessTokenExpiresAt: timestamp("accessToken_expires_at", {
       mode: "date",
     }),
-    refreshTokenExpiresAt: timestamp("refresh_token_expires_at", {
+    refreshTokenExpiresAt: timestamp("refreshToken_expires_at", {
       mode: "date",
     }),
     scope: text("scope"),
     password: text("password"),
-    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "date" })
+    createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt", { mode: "date" })
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
   },
@@ -129,9 +129,9 @@ export const verificationTable = pgTable(
       .primaryKey(),
     identifier: text("identifier").notNull(),
     value: text("value").notNull(),
-    expiresAt: timestamp("expires_at", { mode: "date" }).notNull(),
-    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "date" })
+    expiresAt: timestamp("expiresAt", { mode: "date" }).notNull(),
+    createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt", { mode: "date" })
       .defaultNow()
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
@@ -258,7 +258,7 @@ export const teamMemberTable = pgTable(
 );
 
 export const invitationTable = pgTable(
-  "invitation",
+  "workspace_invitation",
   {
     id: text("id")
       .$defaultFn(() => createId())
@@ -277,9 +277,9 @@ export const invitationTable = pgTable(
       .references(() => userTable.id, { onDelete: "cascade" }),
   },
   (table) => [
-    index("invitation_workspaceId_idx").on(table.workspaceId),
-    index("invitation_email_idx").on(table.email),
-    index("invitation_inviterId_idx").on(table.inviterId),
+    index("workspace_invitation_workspaceId_idx").on(table.workspaceId),
+    index("workspace_invitation_email_idx").on(table.email),
+    index("workspace_invitation_inviterId_idx").on(table.inviterId),
   ],
 );
 
@@ -571,7 +571,7 @@ export const timeEntryTable = pgTable(
 );
 
 export const activityTable = pgTable(
-  "activity",
+  "task_activity",
   {
     id: text("id")
       .$defaultFn(() => createId())
@@ -1052,30 +1052,30 @@ export const apikeyTable = pgTable(
     id: text("id")
       .$defaultFn(() => createId())
       .primaryKey(),
-    configId: text("config_id").default("default").notNull(),
+    configId: text("configId").default("default").notNull(),
     name: text("name"),
     start: text("start"),
-    referenceId: text("reference_id")
+    referenceId: text("referenceId")
       .notNull()
       .references(() => userTable.id, { onDelete: "cascade" }),
     prefix: text("prefix"),
     key: text("key").notNull(),
-    userId: text("user_id").references(() => userTable.id, {
+    userId: text("userId").references(() => userTable.id, {
       onDelete: "cascade",
     }),
-    refillInterval: integer("refill_interval"),
-    refillAmount: integer("refill_amount"),
-    lastRefillAt: timestamp("last_refill_at", { mode: "date" }),
+    refillInterval: integer("refillInterval"),
+    refillAmount: integer("refillAmount"),
+    lastRefillAt: timestamp("lastRefillAt", { mode: "date" }),
     enabled: boolean("enabled").default(true),
-    rateLimitEnabled: boolean("rate_limit_enabled").default(true),
-    rateLimitTimeWindow: integer("rate_limit_time_window").default(86400000),
-    rateLimitMax: integer("rate_limit_max").default(10),
-    requestCount: integer("request_count").default(0),
+    rateLimitEnabled: boolean("rateLimitEnabled").default(true),
+    rateLimitTimeWindow: integer("rateLimitTimeWindow").default(86400000),
+    rateLimitMax: integer("rateLimitMax").default(10),
+    requestCount: integer("requestCount").default(0),
     remaining: integer("remaining"),
-    lastRequest: timestamp("last_request", { mode: "date" }),
-    expiresAt: timestamp("expires_at", { mode: "date" }),
-    createdAt: timestamp("created_at", { mode: "date" }).notNull(),
-    updatedAt: timestamp("updated_at", { mode: "date" }).notNull(),
+    lastRequest: timestamp("lastRequest", { mode: "date" }),
+    expiresAt: timestamp("expiresAt", { mode: "date" }),
+    createdAt: timestamp("createdAt", { mode: "date" }).notNull(),
+    updatedAt: timestamp("updatedAt", { mode: "date" }).notNull(),
     permissions: text("permissions"),
     metadata: text("metadata"),
   },
