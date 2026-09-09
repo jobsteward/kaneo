@@ -120,9 +120,9 @@ function SignIn() {
     if (captchaPending) return;
     setIsCustomOAuthLoading(true);
     try {
-      const result = await authClient.signIn.oauth2(
+      const result = await authClient.signIn.social(
         {
-          providerId: "custom",
+          provider: "custom",
           callbackURL: getCallbackUrl(),
           errorCallbackURL: `${import.meta.env.VITE_CLIENT_URL}/auth/sign-in`,
         },

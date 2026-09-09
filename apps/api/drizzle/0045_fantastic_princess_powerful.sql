@@ -26,4 +26,15 @@ ALTER TABLE "custom_field_value" ADD CONSTRAINT "custom_field_value_task_id_task
 ALTER TABLE "custom_field_value" ADD CONSTRAINT "custom_field_value_field_id_custom_field_definition_id_fk" FOREIGN KEY ("field_id") REFERENCES "public"."custom_field_definition"("id") ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
 CREATE INDEX "custom_field_def_projectId_idx" ON "custom_field_definition" USING btree ("project_id");--> statement-breakpoint
 CREATE INDEX "custom_field_value_taskId_idx" ON "custom_field_value" USING btree ("task_id");--> statement-breakpoint
-CREATE INDEX "custom_field_value_fieldId_idx" ON "custom_field_value" USING btree ("field_id");
+CREATE INDEX "custom_field_value_fieldId_idx" ON "custom_field_value" USING btree ("field_id");--> statement-breakpoint
+-- Fork (crm-integration): team.member_count and team_member.membership_key are folded into
+-- this released migration so the fork adds no journal entry and no snapshot, which is what
+-- used to conflict on every rebase. They run only on a database that had not yet applied
+-- 0045; a database already at 0045 must already carry these columns.
+ALTER TABLE "team" ADD COLUMN "member_count" integer DEFAULT 0 NOT NULL;
+--> statement-breakpoint
+UPDATE "team" SET "member_count" = (SELECT count(*) FROM "team_member" WHERE "team_member"."team_id" = "team"."id");
+--> statement-breakpoint
+ALTER TABLE "team_member" ADD COLUMN "membership_key" text;
+--> statement-breakpoint
+ALTER TABLE "team_member" ADD CONSTRAINT "team_member_membership_key_unique" UNIQUE("membership_key");

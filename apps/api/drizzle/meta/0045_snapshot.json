@@ -2980,6 +2980,13 @@
 					"primaryKey": false,
 					"notNull": true
 				},
+				"member_count": {
+					"name": "member_count",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true,
+					"default": 0
+				},
 				"workspace_id": {
 					"name": "workspace_id",
 					"type": "text",
@@ -3055,6 +3062,12 @@
 					"primaryKey": false,
 					"notNull": true
 				},
+				"membership_key": {
+					"name": "membership_key",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
+				},
 				"created_at": {
 					"name": "created_at",
 					"type": "timestamp",
@@ -3115,7 +3128,13 @@
 				}
 			},
 			"compositePrimaryKeys": {},
-			"uniqueConstraints": {},
+			"uniqueConstraints": {
+				"team_member_membership_key_unique": {
+					"name": "team_member_membership_key_unique",
+					"nullsNotDistinct": false,
+					"columns": ["membership_key"]
+				}
+			},
 			"policies": {},
 			"checkConstraints": {},
 			"isRLSEnabled": false

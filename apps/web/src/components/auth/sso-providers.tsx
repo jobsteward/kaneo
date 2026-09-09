@@ -62,9 +62,9 @@ export function SSOProviders({
     if (disabled) return;
     setLoadingProvider("custom");
     try {
-      const result = await authClient.signIn.oauth2(
+      const result = await authClient.signIn.social(
         {
-          providerId: "custom",
+          provider: "custom",
           callbackURL,
           errorCallbackURL,
         },
