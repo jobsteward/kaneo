@@ -2,11 +2,7 @@ import { resolveFileSecret } from "../utils/file-secret";
 
 const LOCAL_FALLBACK_CONNECTION_STRING = "postgresql://localhost:5432/kaneo";
 
-type DatabaseConfigSource =
-  | "DATABASE_URL"
-  | "TEST_DATABASE_URL"
-  | "POSTGRES_ENV"
-  | "LOCAL_FALLBACK";
+type DatabaseConfigSource = "DATABASE_URL" | "POSTGRES_ENV" | "LOCAL_FALLBACK";
 
 export type ResolvedDatabaseConfig = {
   connectionString: string;
@@ -55,10 +51,6 @@ function toResolvedConfig(
 }
 
 export function resolveDatabaseConfig(): ResolvedDatabaseConfig {
-  if (process.env.TEST_DATABASE_URL) {
-    return toResolvedConfig(process.env.TEST_DATABASE_URL, "TEST_DATABASE_URL");
-  }
-
   if (process.env.DATABASE_URL) {
     return toResolvedConfig(process.env.DATABASE_URL, "DATABASE_URL");
   }
