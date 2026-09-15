@@ -1,7 +1,11 @@
-import { and, eq, inArray } from "drizzle-orm";
 import type { Context, Next } from "hono";
 import { HTTPException } from "hono/http-exception";
-import db, { schema } from "../database";
+import { activeWorkspaceIdOf } from "./active-workspace-id";
+import {
+  lookupTaskWorkspaceIds,
+  lookupWorkspaceId,
+  type WorkspaceResource,
+} from "./lookup-workspace-id";
 import { validateWorkspaceAccess } from "./validate-workspace-access";
 
 type WorkspaceIdSource =
@@ -10,16 +14,7 @@ type WorkspaceIdSource =
   | { type: "param"; key: string }
   | {
       type: "lookup";
-      resource:
-        | "project"
-        | "task"
-        | "label"
-        | "timeEntry"
-        | "activity"
-        | "comment"
-        | "column"
-        | "workflowRule"
-        | "customField";
+      resource: WorkspaceResource;
       idKey: string;
     }
   | {
@@ -27,11 +22,9 @@ type WorkspaceIdSource =
       resource: "task";
       idKey: string;
     };
-
 type WorkspaceAccessMiddlewareConfig = {
   sources: WorkspaceIdSource[];
 };
-
 async function readJsonObjectBody(
   c: Context,
 ): Promise<Record<string, unknown>> {
@@ -47,7 +40,6 @@ export function workspaceAccessMiddleware(
 ) {
   return async (c: Context, next: Next) => {
     const userId = c.get("userId");
-
     if (!userId) {
       throw new HTTPException(401, { message: "Unauthorized" });
     }
@@ -83,17 +75,7 @@ export function workspaceAccessMiddleware(
             (id): id is string => typeof id === "string",
           );
           if (taskIds.length > 0) {
-            const tasks = await db
-              .select({ workspaceId: schema.projectTable.workspaceId })
-              .from(schema.taskTable)
-              .innerJoin(
-                schema.projectTable,
-                eq(schema.taskTable.projectId, schema.projectTable.id),
-              )
-              .where(inArray(schema.taskTable.id, taskIds));
-            const workspaceIds = [
-              ...new Set(tasks.map((task) => task.workspaceId)),
-            ];
+            const workspaceIds = await lookupTaskWorkspaceIds(taskIds);
             if (workspaceIds.length === 0) {
               throw new HTTPException(404, { message: "No tasks found" });
             }
@@ -120,8 +102,12 @@ export function workspaceAccessMiddleware(
 
     const apiKey = c.get("apiKey");
     const apiKeyId = apiKey?.id;
-
-    await validateWorkspaceAccess(userId, workspaceId, apiKeyId);
+    await validateWorkspaceAccess(
+      userId,
+      workspaceId,
+      apiKeyId,
+      activeWorkspaceIdOf(c),
+    );
 
     c.set("workspaceId", workspaceId);
 
@@ -129,205 +115,17 @@ export function workspaceAccessMiddleware(
   };
 }
 
-async function lookupWorkspaceId(
-  resource:
-    | "project"
-    | "task"
-    | "label"
-    | "timeEntry"
-    | "activity"
-    | "comment"
-    | "column"
-    | "workflowRule"
-    | "customField",
-  id: string,
-): Promise<string | null> {
-  try {
-    switch (resource) {
-      case "project": {
-        const [project] = await db
-          .select({ workspaceId: schema.projectTable.workspaceId })
-          .from(schema.projectTable)
-          .where(eq(schema.projectTable.id, id))
-          .limit(1);
-        return project?.workspaceId || null;
-      }
-
-      case "task": {
-        const [task] = await db
-          .select({
-            workspaceId: schema.projectTable.workspaceId,
-          })
-          .from(schema.taskTable)
-          .innerJoin(
-            schema.projectTable,
-            eq(schema.taskTable.projectId, schema.projectTable.id),
-          )
-          .where(eq(schema.taskTable.id, id))
-          .limit(1);
-        return task?.workspaceId || null;
-      }
-
-      case "label": {
-        const [label] = await db
-          .select({
-            workspaceId: schema.labelTable.workspaceId,
-            taskId: schema.labelTable.taskId,
-            taskWorkspaceId: schema.projectTable.workspaceId,
-          })
-          .from(schema.labelTable)
-          .leftJoin(
-            schema.taskTable,
-            eq(schema.labelTable.taskId, schema.taskTable.id),
-          )
-          .leftJoin(
-            schema.projectTable,
-            eq(schema.taskTable.projectId, schema.projectTable.id),
-          )
-          .where(eq(schema.labelTable.id, id))
-          .limit(1);
-        // Older releases allowed inconsistent label/task references. Never use
-        // such a row to authorize reads, mutations or external provider sync.
-        if (label?.taskId && label.taskWorkspaceId !== label.workspaceId) {
-          return null;
-        }
-        return label?.workspaceId || null;
-      }
-
-      case "timeEntry": {
-        const [timeEntry] = await db
-          .select({
-            workspaceId: schema.projectTable.workspaceId,
-          })
-          .from(schema.timeEntryTable)
-          .innerJoin(
-            schema.taskTable,
-            eq(schema.timeEntryTable.taskId, schema.taskTable.id),
-          )
-          .innerJoin(
-            schema.projectTable,
-            eq(schema.taskTable.projectId, schema.projectTable.id),
-          )
-          .where(eq(schema.timeEntryTable.id, id))
-          .limit(1);
-        return timeEntry?.workspaceId || null;
-      }
-
-      case "activity": {
-        const [activity] = await db
-          .select({
-            workspaceId: schema.projectTable.workspaceId,
-          })
-          .from(schema.activityTable)
-          .innerJoin(
-            schema.taskTable,
-            eq(schema.activityTable.taskId, schema.taskTable.id),
-          )
-          .innerJoin(
-            schema.projectTable,
-            eq(schema.taskTable.projectId, schema.projectTable.id),
-          )
-          .where(eq(schema.activityTable.id, id))
-          .limit(1);
-        return activity?.workspaceId || null;
-      }
-
-      case "comment": {
-        const [comment] = await db
-          .select({
-            workspaceId: schema.projectTable.workspaceId,
-          })
-          .from(schema.activityTable)
-          .innerJoin(
-            schema.taskTable,
-            eq(schema.activityTable.taskId, schema.taskTable.id),
-          )
-          .innerJoin(
-            schema.projectTable,
-            eq(schema.taskTable.projectId, schema.projectTable.id),
-          )
-          .where(
-            and(
-              eq(schema.activityTable.id, id),
-              eq(schema.activityTable.type, "comment"),
-            ),
-          )
-          .limit(1);
-        return comment?.workspaceId || null;
-      }
-
-      case "column": {
-        const [column] = await db
-          .select({
-            workspaceId: schema.projectTable.workspaceId,
-          })
-          .from(schema.columnTable)
-          .innerJoin(
-            schema.projectTable,
-            eq(schema.columnTable.projectId, schema.projectTable.id),
-          )
-          .where(eq(schema.columnTable.id, id))
-          .limit(1);
-        return column?.workspaceId || null;
-      }
-
-      case "workflowRule": {
-        const [workflowRule] = await db
-          .select({
-            workspaceId: schema.projectTable.workspaceId,
-          })
-          .from(schema.workflowRuleTable)
-          .innerJoin(
-            schema.projectTable,
-            eq(schema.workflowRuleTable.projectId, schema.projectTable.id),
-          )
-          .where(eq(schema.workflowRuleTable.id, id))
-          .limit(1);
-        return workflowRule?.workspaceId || null;
-      }
-
-      case "customField": {
-        const [field] = await db
-          .select({
-            workspaceId: schema.projectTable.workspaceId,
-          })
-          .from(schema.customFieldDefinitionTable)
-          .innerJoin(
-            schema.projectTable,
-            eq(
-              schema.customFieldDefinitionTable.projectId,
-              schema.projectTable.id,
-            ),
-          )
-          .where(eq(schema.customFieldDefinitionTable.id, id))
-          .limit(1);
-        return field?.workspaceId || null;
-      }
-
-      default:
-        return null;
-    }
-  } catch (error) {
-    console.error(`Error looking up workspaceId for ${resource}:`, error);
-    return null;
-  }
-}
-
 export const workspaceAccess = {
   fromQuery: (key = "workspaceId") =>
     workspaceAccessMiddleware({ sources: [{ type: "query", key }] }),
-
   fromBody: (key = "workspaceId") =>
     workspaceAccessMiddleware({ sources: [{ type: "body", key }] }),
-
   fromParam: (key = "workspaceId") =>
     workspaceAccessMiddleware({ sources: [{ type: "param", key }] }),
-
   fromProject: (idKey = "id") =>
     workspaceAccessMiddleware({
       sources: [{ type: "lookup", resource: "project", idKey }],
     }),
-
   fromTask: (idKey = "id") =>
     workspaceAccessMiddleware({
       sources: [
@@ -335,7 +133,6 @@ export const workspaceAccess = {
         { type: "query", key: "workspaceId" },
       ],
     }),
-
   fromTaskId: (idKey = "taskId") =>
     workspaceAccessMiddleware({
       sources: [
@@ -343,12 +140,10 @@ export const workspaceAccess = {
         { type: "query", key: "workspaceId" },
       ],
     }),
-
   fromTasks: (idKey = "taskIds") =>
     workspaceAccessMiddleware({
       sources: [{ type: "lookupMany", resource: "task", idKey }],
     }),
-
   fromLabel: (idKey = "id") =>
     workspaceAccessMiddleware({
       sources: [
@@ -356,7 +151,6 @@ export const workspaceAccess = {
         { type: "query", key: "workspaceId" },
       ],
     }),
-
   fromTimeEntry: (idKey = "id") =>
     workspaceAccessMiddleware({
       sources: [
@@ -364,7 +158,6 @@ export const workspaceAccess = {
         { type: "query", key: "workspaceId" },
       ],
     }),
-
   fromActivity: (idKey = "id") =>
     workspaceAccessMiddleware({
       sources: [
@@ -372,7 +165,6 @@ export const workspaceAccess = {
         { type: "query", key: "workspaceId" },
       ],
     }),
-
   fromComment: (idKey = "id") =>
     workspaceAccessMiddleware({
       sources: [
@@ -380,7 +172,6 @@ export const workspaceAccess = {
         { type: "query", key: "workspaceId" },
       ],
     }),
-
   fromColumn: (idKey = "id") =>
     workspaceAccessMiddleware({
       sources: [
@@ -388,7 +179,6 @@ export const workspaceAccess = {
         { type: "query", key: "workspaceId" },
       ],
     }),
-
   fromWorkflowRule: (idKey = "id") =>
     workspaceAccessMiddleware({
       sources: [
@@ -396,12 +186,10 @@ export const workspaceAccess = {
         { type: "query", key: "workspaceId" },
       ],
     }),
-
   fromCustomField: (idKey = "id") =>
     workspaceAccessMiddleware({
       sources: [{ type: "lookup", resource: "customField", idKey }],
     }),
-
   fromProjectId: (idKey = "projectId") =>
     workspaceAccessMiddleware({
       sources: [

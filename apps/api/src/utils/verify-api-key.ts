@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { and, eq, exists, gt, isNull, or, sql } from "drizzle-orm";
+import { and, eq, exists, gt, isNull, or } from "drizzle-orm";
 import db, { schema } from "../database";
 import { notBannedCondition } from "./user-ban";
 
@@ -58,10 +58,7 @@ export async function verifyApiKey(
               .from(schema.userTable)
               .where(
                 and(
-                  eq(
-                    schema.userTable.id,
-                    sql`coalesce(${schema.apikeyTable.referenceId}, ${schema.apikeyTable.userId})`,
-                  ),
+                  eq(schema.userTable.id, schema.apikeyTable.referenceId),
                   notBannedCondition(),
                 ),
               ),
@@ -87,7 +84,7 @@ export async function verifyApiKey(
         valid: true,
         key: {
           ...apiKey,
-          userId: apiKey.referenceId ?? apiKey.userId ?? "",
+          userId: apiKey.referenceId,
           enabled: apiKey.enabled ?? false,
           permissions: parsePermissions(apiKey.permissions),
           metadata: null,
@@ -137,7 +134,7 @@ export async function verifyApiKey(
       valid: true,
       key: {
         id: apiKey.id,
-        userId: apiKey.referenceId ?? apiKey.userId ?? "",
+        userId: apiKey.referenceId,
         name: apiKey.name,
         prefix: apiKey.prefix,
         start: apiKey.start,

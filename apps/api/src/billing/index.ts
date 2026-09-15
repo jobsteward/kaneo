@@ -1,8 +1,5 @@
 import { constructWebhookEvent } from "creem/webhooks.js";
-import { and, eq, inArray } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
-import db from "../database";
-import { workspaceUserTable } from "../database/schema";
 import {
   apiRouter,
   type BaseVariables,
@@ -11,6 +8,7 @@ import {
   jsonResponse,
 } from "../openapi";
 import { requireUserSession } from "../utils/require-user-session";
+import { activeWorkspaceIdOf } from "../utils/active-workspace-id";
 import { validateWorkspaceAccess } from "../utils/validate-workspace-access";
 import { creemWebhookSecret, isBillingEnabled } from "./config";
 import createCheckout from "./controllers/create-checkout";
@@ -21,6 +19,7 @@ import handleWebhook, {
   type BillingWebhookEvent,
 } from "./controllers/handle-webhook";
 import { createCustomerPortalLink } from "./creem-client";
+import { requireBillingManager } from "./require-billing-manager";
 import {
   checkoutSchema,
   portalSchema,
@@ -28,27 +27,6 @@ import {
   workspaceBillingSchema,
 } from "./response";
 import { createCheckoutBody, workspaceIdParam } from "./schema";
-
-async function requireBillingManager(userId: string, workspaceId: string) {
-  await validateWorkspaceAccess(userId, workspaceId);
-
-  const [member] = await db
-    .select({ role: workspaceUserTable.role })
-    .from(workspaceUserTable)
-    .where(
-      and(
-        eq(workspaceUserTable.workspaceId, workspaceId),
-        eq(workspaceUserTable.userId, userId),
-        inArray(workspaceUserTable.role, ["owner", "admin"]),
-      ),
-    );
-
-  if (!member) {
-    throw new HTTPException(403, {
-      message: "Only workspace owners and admins can manage billing",
-    });
-  }
-}
 
 // Excluded from the app-wide auth middleware: authenticity comes from the
 // provider's webhook signature instead of a session.
@@ -162,13 +140,18 @@ const billing = apiRouter<BaseVariables>()
   })
   .openapi(getWorkspaceBillingRoute, async (c) => {
     const { workspaceId } = c.req.valid("param");
-    await validateWorkspaceAccess(c.get("userId"), workspaceId);
+    await validateWorkspaceAccess(
+      c.get("userId"),
+      workspaceId,
+      c.get("apiKey")?.id,
+      activeWorkspaceIdOf(c),
+    );
     return c.json(await getWorkspaceBilling(workspaceId), 200);
   })
   .openapi(createCheckoutRoute, async (c) => {
     const { workspaceId } = c.req.valid("param");
     const { plan, interval } = c.req.valid("json");
-    await requireBillingManager(c.get("userId"), workspaceId);
+    await requireBillingManager(c, workspaceId);
 
     return c.json(
       await createCheckout({
@@ -182,7 +165,7 @@ const billing = apiRouter<BaseVariables>()
   })
   .openapi(createPortalRoute, async (c) => {
     const { workspaceId } = c.req.valid("param");
-    await requireBillingManager(c.get("userId"), workspaceId);
+    await requireBillingManager(c, workspaceId);
 
     const billingRow = await getOrCreateWorkspaceBilling(workspaceId);
     if (!billingRow.creemCustomerId) {

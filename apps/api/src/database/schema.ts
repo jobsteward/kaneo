@@ -1062,9 +1062,6 @@ export const apikeyTable = pgTable(
       .references(() => userTable.id, { onDelete: "cascade" }),
     prefix: text("prefix"),
     key: text("key").notNull(),
-    userId: text("userId").references(() => userTable.id, {
-      onDelete: "cascade",
-    }),
     refillInterval: integer("refillInterval"),
     refillAmount: integer("refillAmount"),
     lastRefillAt: timestamp("lastRefillAt", { mode: "date" }),
@@ -1085,7 +1082,6 @@ export const apikeyTable = pgTable(
     index("apikey_configId_idx").on(table.configId),
     index("apikey_key_idx").on(table.key),
     index("apikey_referenceId_idx").on(table.referenceId),
-    index("apikey_userId_idx").on(table.userId),
   ],
 );
 

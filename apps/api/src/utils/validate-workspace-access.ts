@@ -1,4 +1,4 @@
-import { and, eq, or } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import db, { schema } from "../database";
 import { hasInstanceAdminRole } from "./instance-admin-role";
@@ -7,7 +7,14 @@ export async function validateWorkspaceAccess(
   userId: string,
   workspaceId: string,
   apiKeyId?: string,
+  activeWorkspaceId?: string,
 ): Promise<void> {
+  if (activeWorkspaceId && activeWorkspaceId !== workspaceId) {
+    throw new HTTPException(403, {
+      message: "The credential does not grant access to this workspace",
+    });
+  }
+
   if (apiKeyId) {
     const apiKey = await db
       .select()
@@ -15,10 +22,7 @@ export async function validateWorkspaceAccess(
       .where(
         and(
           eq(schema.apikeyTable.id, apiKeyId),
-          or(
-            eq(schema.apikeyTable.referenceId, userId),
-            eq(schema.apikeyTable.userId, userId),
-          ),
+          eq(schema.apikeyTable.referenceId, userId),
           eq(schema.apikeyTable.enabled, true),
         ),
       )

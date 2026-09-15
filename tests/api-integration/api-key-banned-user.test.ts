@@ -23,7 +23,6 @@ async function createUserWithKey(
   const key = `test_${randomUUID()}`;
   await db.insert(schema.apikeyTable).values({
     referenceId: userId,
-    userId,
     key: createHash("sha256").update(key).digest("base64url"),
     enabled: true,
     createdAt: new Date(),
@@ -58,19 +57,19 @@ describe("API integration: API keys of banned users", () => {
     await db
       .update(schema.apikeyTable)
       .set({ rateLimitEnabled: false, rateLimitMax: 1, requestCount: 0 })
-      .where(eq(schema.apikeyTable.userId, userId));
+      .where(eq(schema.apikeyTable.referenceId, userId));
     for (let i = 0; i < 3; i++) expect(await verifyApiKey(key)).not.toBeNull();
     expect(
       (
         await db.query.apikeyTable.findFirst({
-          where: eq(schema.apikeyTable.userId, userId),
+          where: eq(schema.apikeyTable.referenceId, userId),
         })
       )?.requestCount,
     ).toBe(0);
     await db
       .update(schema.apikeyTable)
       .set({ rateLimitEnabled: true })
-      .where(eq(schema.apikeyTable.userId, userId));
+      .where(eq(schema.apikeyTable.referenceId, userId));
     expect(await verifyApiKey(key)).not.toBeNull();
     expect(await verifyApiKey(key)).toBeNull();
   });

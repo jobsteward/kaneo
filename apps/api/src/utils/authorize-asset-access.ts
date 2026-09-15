@@ -1,5 +1,6 @@
 import type { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
+import { activeWorkspaceIdOf } from "./active-workspace-id";
 import { resolveAssetBearerOrCookie } from "./authenticate-api-request";
 import { validateWorkspaceAccess } from "./validate-workspace-access";
 
@@ -28,5 +29,10 @@ export async function authorizeAssetAccess(
     throw new HTTPException(403, {
       message: "Staged uploads are private to their owner",
     });
-  await validateWorkspaceAccess(userId, asset.workspaceId, apiKeyId);
+  await validateWorkspaceAccess(
+    userId,
+    asset.workspaceId,
+    apiKeyId,
+    activeWorkspaceIdOf(c),
+  );
 }

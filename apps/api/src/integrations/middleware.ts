@@ -3,6 +3,7 @@ import type { Context, Next } from "hono";
 import { HTTPException } from "hono/http-exception";
 import db from "../database";
 import { projectTable } from "../database/schema";
+import { activeWorkspaceIdOf } from "../utils/active-workspace-id";
 import { validateWorkspaceAccess } from "../utils/validate-workspace-access";
 
 // Route middleware runs before the validators, so c.req.valid() is unavailable.
@@ -34,6 +35,7 @@ export async function scopeToProjectFromBody(c: Context, next: Next) {
     userId,
     project.workspaceId,
     c.get("apiKey")?.id,
+    activeWorkspaceIdOf(c),
   );
   c.set("workspaceId", project.workspaceId);
 
