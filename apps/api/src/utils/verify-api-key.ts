@@ -62,7 +62,7 @@ export async function verifyApiKey(key: string) {
     valid: true,
     key: {
       id: apiKey.id,
-      userId: apiKey.referenceId ?? apiKey.userId ?? "",
+      userId: apiKey.referenceId,
       name: apiKey.name,
       prefix: apiKey.prefix,
       start: apiKey.start,

@@ -37,7 +37,7 @@ const { authorizeAssetAccess } = await import(
   "../../../apps/api/src/utils/authorize-asset-access"
 );
 
-const context = {} as Context;
+const context = { get: () => undefined } as unknown as Context;
 
 async function statusOf(promise: Promise<void>) {
   try {

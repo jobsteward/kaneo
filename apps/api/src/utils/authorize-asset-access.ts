@@ -1,4 +1,5 @@
 import type { Context } from "hono";
+import { activeWorkspaceIdOf } from "./active-workspace-id";
 import { resolveAssetBearerOrCookie } from "./authenticate-api-request";
 import { validateWorkspaceAccess } from "./validate-workspace-access";
 
@@ -25,5 +26,10 @@ export async function authorizeAssetAccess(
   }
 
   const { userId, apiKeyId } = await resolveAssetBearerOrCookie(c);
-  await validateWorkspaceAccess(userId, asset.workspaceId, apiKeyId);
+  await validateWorkspaceAccess(
+    userId,
+    asset.workspaceId,
+    apiKeyId,
+    activeWorkspaceIdOf(c),
+  );
 }

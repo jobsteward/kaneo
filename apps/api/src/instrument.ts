@@ -1,6 +1,5 @@
 import { readFileSync } from "node:fs";
 import * as Sentry from "@sentry/node";
-import { nodeProfilingIntegration } from "@sentry/profiling-node";
 
 function parseSampleRate(value: string | undefined) {
   const n = Number(value);
@@ -25,6 +24,7 @@ function readAppVersion() {
 }
 
 if (process.env.SENTRY_DSN) {
+  const { nodeProfilingIntegration } = await import("@sentry/profiling-node");
   Sentry.init({
     dsn: process.env.SENTRY_DSN,
     environment:
