@@ -104,12 +104,14 @@ const projectBroadcastTimeouts = new Map<
 let adapter: BroadcastAdapter | null = null;
 
 // --- Subscribe to incoming broadcasts and deliver to local connections ---
-export async function initializeWebSocketAdapter() {
+export async function initializeWebSocketAdapter(custom?: BroadcastAdapter) {
   if (adapter) return;
 
-  const nextAdapter = isRedisConfigured()
-    ? new RedisBroadcastAdapter()
-    : new InMemoryBroadcastAdapter();
+  const nextAdapter =
+    custom ??
+    (isRedisConfigured()
+      ? new RedisBroadcastAdapter()
+      : new InMemoryBroadcastAdapter());
 
   try {
     await nextAdapter.subscribe((msg: BroadcastMessage) => {

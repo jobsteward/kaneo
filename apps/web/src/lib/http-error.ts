@@ -20,7 +20,7 @@ export function handleUnauthorized(): void {
   const currentPath =
     window.location.pathname + window.location.search + window.location.hash;
   const target = currentPath
-    ? `/auth/sign-in?redirect=${encodeURIComponent(currentPath)}`
-    : "/auth/sign-in";
+    ? `${import.meta.env.BASE_URL}auth/sign-in?redirect=${encodeURIComponent(currentPath)}`
+    : `${import.meta.env.BASE_URL}auth/sign-in`;
   window.location.replace(target);
 }
