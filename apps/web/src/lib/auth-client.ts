@@ -16,7 +16,7 @@ import { ac, admin, member, owner, viewer } from "./permissions";
 const getBaseURL = () => {
   const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:1337";
   try {
-    const url = new URL(apiUrl);
+    const url = new URL(apiUrl, window.location.origin);
     return `${url.protocol}//${url.host}`;
   } catch {
     return apiUrl.split("/").slice(0, 3).join("/");
@@ -25,7 +25,7 @@ const getBaseURL = () => {
 
 export const authClient = createAuthClient({
   baseURL: getBaseURL(),
-  basePath: "/api/auth",
+  basePath: import.meta.env.VITE_AUTH_BASE_PATH || "/api/auth",
   plugins: [
     anonymousClient(),
     lastLoginMethodClient(),

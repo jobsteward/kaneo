@@ -62,7 +62,7 @@ export default function WorkspaceLayout({
             <Breadcrumb className="flex items-center gap-1 text-xs w-full">
               <BreadcrumbList>
                 <BreadcrumbItem>
-                  <BreadcrumbLink href="/">
+                  <BreadcrumbLink href={import.meta.env.BASE_URL}>
                     <span className="text-xs font-normal text-card-foreground">
                       {workspace?.name}
                     </span>

@@ -15,7 +15,7 @@ export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(packageJson.version),
   },
-  base: "/",
+  base: process.env.VITE_BASE_PATH || "/",
   plugins: [
     tanstackRouter({
       autoCodeSplitting: true,

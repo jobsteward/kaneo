@@ -17,12 +17,12 @@ export function Logo({ className = "" }: LogoProps) {
       className={`w-auto ${className}`}
     >
       <img
-        src="/logo-dark.svg"
+        src={`${import.meta.env.BASE_URL}logo-dark.svg`}
         alt="Kaneo"
         className="h-6 w-auto dark:hidden"
       />
       <img
-        src="/logo-light.svg"
+        src={`${import.meta.env.BASE_URL}logo-light.svg`}
         alt="Kaneo"
         className="hidden h-6 w-auto dark:block"
       />
