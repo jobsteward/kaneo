@@ -83,7 +83,9 @@ export function SettingsLayout({
             <Breadcrumb className="flex items-center gap-1 text-xs w-full">
               <BreadcrumbList>
                 <BreadcrumbItem>
-                  <BreadcrumbLink href="/dashboard/settings">
+                  <BreadcrumbLink
+                    href={`${import.meta.env.BASE_URL}dashboard/settings`}
+                  >
                     <h1 className="text-xs text-card-foreground">
                       {t("navigation:page.settingsTitle")}
                     </h1>
