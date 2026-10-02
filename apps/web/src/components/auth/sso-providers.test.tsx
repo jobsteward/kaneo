@@ -1,5 +1,12 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vite-plus/test";
 import type { GetConfigResponse } from "@/fetchers/config/get-config";
 import { SSOProviders } from "./sso-providers";
 
@@ -54,11 +61,14 @@ describe("SSOProviders", () => {
     );
 
     await vi.waitFor(() => expect(socialSignIn).toHaveBeenCalledTimes(1));
-    expect(socialSignIn).toHaveBeenCalledWith({
-      provider: "custom",
-      callbackURL: "https://kaneo.test/dashboard",
-      errorCallbackURL: "https://kaneo.test/auth/sign-in",
-    });
+    expect(socialSignIn).toHaveBeenCalledWith(
+      {
+        provider: "custom",
+        callbackURL: "https://kaneo.test/dashboard",
+        errorCallbackURL: "https://kaneo.test/auth/sign-in",
+      },
+      { headers: undefined },
+    );
   });
 
   it("dispatches the built-in social-provider payload for Google sign-in", async () => {
@@ -77,11 +87,14 @@ describe("SSOProviders", () => {
     );
 
     await vi.waitFor(() => expect(socialSignIn).toHaveBeenCalledTimes(1));
-    expect(socialSignIn).toHaveBeenCalledWith({
-      provider: "google",
-      callbackURL: "https://kaneo.test/dashboard",
-      errorCallbackURL: "https://kaneo.test/auth/sign-in",
-    });
+    expect(socialSignIn).toHaveBeenCalledWith(
+      {
+        provider: "google",
+        callbackURL: "https://kaneo.test/dashboard",
+        errorCallbackURL: "https://kaneo.test/auth/sign-in",
+      },
+      { headers: undefined },
+    );
   });
 
   it("surfaces the error toast when the custom OAuth dispatch fails", async () => {

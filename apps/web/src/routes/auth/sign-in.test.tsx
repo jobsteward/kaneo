@@ -1,6 +1,13 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ComponentType, ReactNode } from "react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vite-plus/test";
 import { Route } from "./sign-in";
 
 const socialSignIn = vi.fn();
@@ -75,11 +82,14 @@ describe("SignIn custom OAuth", () => {
     );
 
     await vi.waitFor(() => expect(socialSignIn).toHaveBeenCalledTimes(1));
-    expect(socialSignIn).toHaveBeenCalledWith({
-      provider: "custom",
-      callbackURL: expect.stringContaining("/dashboard"),
-      errorCallbackURL: expect.stringContaining("/auth/sign-in"),
-    });
+    expect(socialSignIn).toHaveBeenCalledWith(
+      {
+        provider: "custom",
+        callbackURL: expect.stringContaining("/dashboard"),
+        errorCallbackURL: expect.stringContaining("/auth/sign-in"),
+      },
+      { headers: undefined },
+    );
   });
 
   it("surfaces the OIDC error and re-enables the button when the dispatch fails", async () => {
