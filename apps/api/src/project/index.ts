@@ -26,6 +26,7 @@ import {
   hasWorkspacePermission,
   requireWorkspacePermission,
 } from "../utils/require-workspace-permission";
+import { activeWorkspaceIdOf } from "../utils/active-workspace-id";
 import { validateWorkspaceAccess } from "../utils/validate-workspace-access";
 import { workspaceAccess } from "../utils/workspace-access-middleware";
 import archiveProjectCtrl from "./controllers/archive-project";
@@ -409,6 +410,7 @@ const project = apiRouter<BaseVariables & { workspaceId: string }>()
       userId,
       targetWorkspaceId,
       c.get("apiKey")?.id,
+      activeWorkspaceIdOf(c),
     );
     if (
       !(await hasWorkspacePermission(
