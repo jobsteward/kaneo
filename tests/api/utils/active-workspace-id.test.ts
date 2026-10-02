@@ -1,5 +1,5 @@
 import type { Context } from "hono";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import { activeWorkspaceIdOf } from "../../../apps/api/src/utils/active-workspace-id";
 
 function contextWithSession(session: unknown): Context {
