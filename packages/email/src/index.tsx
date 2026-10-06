@@ -8,3 +8,4 @@ export {
   sendWorkspaceInvitationEmail,
 } from "./send-email";
 export { isSmtpConfigured } from "./smtp-config";
+export { isEmailConfigured } from "./email-config";
