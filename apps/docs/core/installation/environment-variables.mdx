@@ -221,26 +221,12 @@ Name | Description |
 | `SMTP_SECURE` | Use TLS immediately (default: `true`, typically port 465). Set to `false` for STARTTLS, typically on port 587.
 | `SMTP_USER` | The SMTP user.
 | `SMTP_PASSWORD` | The SMTP password.
-| `SMTP_FROM` | The sender address for SMTP or Cloudflare Email Sending.
+| `SMTP_FROM` | The SMTP from address.
 | `SMTP_REQUIRE_TLS` | Require STARTTLS when `SMTP_SECURE=false` (default: `true`). Sending fails if the server cannot upgrade. Only use `false` for an intentionally unencrypted local development relay.
 | `SMTP_IGNORE_TLS` | Removed: `true` is rejected. This option disabled STARTTLS; it never bypassed certificate validation.
 | `NODE_EXTRA_CA_CERTS` | Path to a trusted CA PEM file for a private SMTP certificate authority. Set before starting the API; certificate expiry and hostname checks remain enabled.
 
 When upgrading, remove `SMTP_IGNORE_TLS=true` and verify delivery with the corrected certificate trust configuration before rollout. Fix invalid certificates instead of disabling validation. [Nodemailer documents the difference between STARTTLS and certificate validation](https://nodemailer.com/smtp#tls-options).
-
-### Cloudflare Email Sending
-
-Cloudflare Email Sending delivers the existing email templates over HTTPS.
-Set both Cloudflare variables and `SMTP_FROM` to enable it.
-Installations without Cloudflare credentials retain the SMTP transport.
-
-| Name | Description |
-| --- | --- |
-| `CLOUDFLARE_EMAIL_ACCOUNT_ID` | Account that owns the verified sending domain. |
-| `CLOUDFLARE_EMAIL_API_TOKEN` | API token with Email Sending: Edit permission for that account. |
-
-The sender domain must be enabled in Cloudflare Email Sending.
-Use HTTPS on hosts that block SMTP ports, including DigitalOcean Droplets.
 
 ## Key points
 

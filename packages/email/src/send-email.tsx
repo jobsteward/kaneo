@@ -1,13 +1,7 @@
 import { render } from "@react-email/components";
 import { config } from "dotenv-mono";
 import * as nodemailer from "nodemailer";
-import {
-  type EmailMessage,
-  isCloudflareEmailConfigured,
-  sendCloudflareEmail,
-} from "./cloudflare-email";
-import { isEmailConfigured } from "./email-config";
-import { getSmtpTransportOptions } from "./smtp-config";
+import { getSmtpTransportOptions, isSmtpConfigured } from "./smtp-config";
 import { getSmtpErrorDetails } from "./smtp-error-details";
 import type { MagicLinkEmailProps } from "./templates/magic-link";
 import MagicLinkEmail from "./templates/magic-link";
@@ -30,12 +24,6 @@ config();
 
 const transporter = nodemailer.createTransport(getSmtpTransportOptions());
 
-function sendMail(message: EmailMessage) {
-  return isCloudflareEmailConfigured()
-    ? sendCloudflareEmail(message)
-    : transporter.sendMail(message);
-}
-
 export const sendMagicLinkEmail = async (
   to: string,
   subject: string,
@@ -43,7 +31,7 @@ export const sendMagicLinkEmail = async (
 ) => {
   const emailTemplate = await render(MagicLinkEmail(data));
   try {
-    await sendMail({
+    await transporter.sendMail({
       from: process.env.SMTP_FROM,
       to,
       subject,
@@ -61,7 +49,7 @@ export const sendOtpEmail = async (
 ) => {
   const emailTemplate = await render(OtpEmail(data));
   try {
-    await sendMail({
+    await transporter.sendMail({
       from: process.env.SMTP_FROM,
       to,
       subject,
@@ -85,7 +73,7 @@ export const sendPasswordResetEmail = async (
     return;
   }
   try {
-    await sendMail({
+    await transporter.sendMail({
       from: process.env.SMTP_FROM,
       to,
       subject,
@@ -109,7 +97,7 @@ export const sendWorkspaceInvitationEmail = async (
   subject: string,
   data: WorkspaceInvitationEmailProps,
 ): Promise<EmailResult> => {
-  if (!isEmailConfigured()) {
+  if (!isSmtpConfigured()) {
     return { success: false, reason: "SMTP_NOT_CONFIGURED" };
   }
 
@@ -117,7 +105,7 @@ export const sendWorkspaceInvitationEmail = async (
     const emailTemplate = await render(
       WorkspaceInvitationEmail({ ...data, to }),
     );
-    await sendMail({
+    await transporter.sendMail({
       from: process.env.SMTP_FROM,
       to,
       subject,
@@ -135,13 +123,13 @@ export const sendNotificationEmail = async (
   subject: string,
   data: NotificationEmailProps,
 ): Promise<EmailResult> => {
-  if (!isEmailConfigured()) {
+  if (!isSmtpConfigured()) {
     return { success: false, reason: "SMTP_NOT_CONFIGURED" };
   }
 
   try {
     const emailTemplate = await render(NotificationEmail(data));
-    await sendMail({
+    await transporter.sendMail({
       from: process.env.SMTP_FROM,
       to,
       subject,
@@ -161,7 +149,7 @@ export const sendTrialReminderEmail = async (
 ) => {
   const emailTemplate = await render(TrialReminderEmail(data));
   try {
-    await sendMail({
+    await transporter.sendMail({
       from: process.env.SMTP_FROM,
       to,
       subject,
